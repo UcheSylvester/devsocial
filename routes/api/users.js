@@ -2,11 +2,24 @@ const express = require("express");
 const gravatar = require("gravatar");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 
 const User = require("../../models/Users");
 const keys = require("../../config/keys");
 
-const { secretJWTTokenKey } = keys;
+const { secretOrKey } = keys;
+
+const formatUser = (user) => {
+  const { _id, name, email, avatar, date } = user;
+
+  return {
+    id: _id,
+    name,
+    email,
+    avatar,
+    date,
+  };
+};
 
 const router = express.Router();
 
@@ -20,12 +33,14 @@ router.get("/test", (req, res) => {
 });
 
 /***
- * @route   GET api/users/register
+ * @route   POST api/users/register
  * @desc    Register user
  * @access  Public
  */
 router.post("/register", (req, res) => {
   const { email, name, password } = req.body;
+
+  console.log({ body: req.body });
 
   const avatar = gravatar.url(email, {
     s: "200",
@@ -35,6 +50,7 @@ router.post("/register", (req, res) => {
 
   // check if user already exists before registering
   User.findOne({ email }).then((user) => {
+    console.log({ user });
     if (user) {
       return res.status(406).json({ email: "Email already exist" });
     }
@@ -49,14 +65,20 @@ router.post("/register", (req, res) => {
 
     // generating bcrypt salt for hashing password
     bcryptjs.genSalt(10, (err, salt) => {
+      if (err) throw err;
+
+      console.log({ salt });
+
       bcryptjs.hash(newUser.password, salt, (error, hash) => {
         if (error) throw error;
+
+        console.log({ hash });
 
         // setting the password on the new user to be saved to the generated hash from bcrypt
         newUser.password = hash;
         newUser
           .save()
-          .then((user) => res.json(user))
+          .then((user) => res.json(formatUser(user)))
           .catch((err) => {
             console.log({ err });
             res.status(500);
@@ -67,11 +89,10 @@ router.post("/register", (req, res) => {
 });
 
 /***
- * @route   GET api/users/loginb
+ * @route   POST api/users/loginb
  * @desc    Login user returing JWT token
  * @access  Public
  */
-
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -87,22 +108,40 @@ router.post("/login", (req, res) => {
 
       //  if user matched, sign the JWT Token with a payload containing basic user info.
       // return token, user and a success message
+
       const { _id, name, avatar } = user;
       const payload = { id: _id, name, avatar };
 
-      jwt.sign(payload, secretJWTTokenKey, (err, token) => {
-        if (err) throw err;
+      jwt.sign(
+        payload,
+        secretOrKey,
+        { expiresIn: 3600 * 24 * 7 },
+        (err, token) => {
+          if (err) throw err;
 
-        return res.json({
-          message: "success",
-          user,
-          token: `Bearer ${token}`,
-        });
-      });
-
-      // if (isMatched) return res.json({ message: "success", user });
+          return res.json({
+            message: "success",
+            user: formatUser(user),
+            token: `Bearer ${token}`,
+          });
+        }
+      );
     });
   });
 });
+
+/***
+ * @route   POST api/users/register
+ * @desc    Return current user
+ * @access  Public
+ */
+router.get(
+  "/current",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const { user } = req;
+    res.json({ message: "success", user: formatUser(user) });
+  }
+);
 
 module.exports = router;
