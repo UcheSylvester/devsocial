@@ -73,8 +73,6 @@ router.post("/register", (req, res) => {
     bcryptjs.genSalt(10, (err, salt) => {
       if (err) throw err;
 
-      console.log({ salt });
-
       bcryptjs.hash(newUser.password, salt, (error, hash) => {
         if (error) throw error;
 
@@ -144,7 +142,7 @@ router.post("/login", (req, res) => {
 /***
  * @route   POST api/users/register
  * @desc    Return current user
- * @access  Public
+ * @access  Private
  */
 router.get(
   "/current",

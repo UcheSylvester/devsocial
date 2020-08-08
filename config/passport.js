@@ -4,7 +4,6 @@ const User = mongoose.model("users");
 
 const keys = require("./keys");
 const passport = require("passport");
-const { json } = require("body-parser");
 
 const { Strategy, ExtractJwt } = JWTPassport;
 const { secretOrKey } = keys;
