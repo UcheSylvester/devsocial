@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 
 const users = require("./routes/api/users");
 const posts = require("./routes/api/posts");
@@ -7,6 +8,10 @@ const profile = require("./routes/api/profile");
 const keys = require("./config/keys");
 
 const app = express();
+
+// middlewares
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // DB CONFIG
 const db = keys.mongoURI;
@@ -20,7 +25,7 @@ mongoose
     useCreateIndex: true,
   })
   .then((res) => console.log("DB connnected successfully!"))
-  .catch((err) => console.log("DB connection failed"));
+  .catch((err) => console.log("DB connection failed", err));
 
 app.get("/", (req, res) => res.send("HELLO!"));
 app.use("/api/users", users);
