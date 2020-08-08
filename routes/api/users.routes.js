@@ -6,7 +6,9 @@ const passport = require("passport");
 
 const User = require("../../models/Users.model");
 const keys = require("../../config/keys");
+
 const validateRegisterInput = require("../../validation/register.validator");
+const validateLoginInput = require("../../validation/login.validator");
 
 const { secretOrKey } = keys;
 
@@ -43,9 +45,7 @@ router.post("/register", (req, res) => {
 
   const { errors, isValid } = validateRegisterInput(req.body);
 
-  console.log({ body: req.body, errors, isValid });
-
-  if (!isValid) return res.status(400).json(errors);
+  if (!isValid) return res.status(400).json({ errors });
 
   const avatar = gravatar.url(email, {
     s: "200",
@@ -55,10 +55,10 @@ router.post("/register", (req, res) => {
 
   // check if user already exists before registering
   User.findOne({ email }).then((user) => {
-    errors.email = "Email already exist";
-
     if (user) {
-      return res.status(406).json(errors);
+      errors.email = "Email already exist";
+
+      return res.status(406).json({ errors });
     }
 
     // creating a new User using the User Schema
@@ -102,6 +102,10 @@ router.post("/register", (req, res) => {
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
+  const { errors, isValid } = validateLoginInput(req.body);
+
+  if (!isValid) return res.status(400).json({ errors });
+
   // find user using the email
   User.findOne({ email }).then((user) => {
     if (!user) return res.status(404).json({ message: "user not found" });
@@ -109,9 +113,10 @@ router.post("/login", (req, res) => {
     // when user exists, match the pasword entered with the password saved
     bcryptjs.compare(password, user.password).then((isMatched) => {
       // user not matched
-      if (!isMatched)
-        return res.status(400).json({ password: "Incorrect password" });
-
+      if (!isMatched) {
+        errors.password = "Incorrect password";
+        return res.status(400).json({ errors });
+      }
       //  if user matched, sign the JWT Token with a payload containing basic user info.
       // return token, user and a success message
 
