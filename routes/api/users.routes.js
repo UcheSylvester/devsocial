@@ -4,8 +4,9 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 
-const User = require("../../models/Users");
+const User = require("../../models/Users.model");
 const keys = require("../../config/keys");
+const validateRegisterInput = require("../../validation/register.validator");
 
 const { secretOrKey } = keys;
 
@@ -40,7 +41,11 @@ router.get("/test", (req, res) => {
 router.post("/register", (req, res) => {
   const { email, name, password } = req.body;
 
-  console.log({ body: req.body });
+  const { errors, isValid } = validateRegisterInput(req.body);
+
+  console.log({ body: req.body, errors, isValid });
+
+  if (!isValid) return res.status(400).json(errors);
 
   const avatar = gravatar.url(email, {
     s: "200",
@@ -50,9 +55,10 @@ router.post("/register", (req, res) => {
 
   // check if user already exists before registering
   User.findOne({ email }).then((user) => {
-    console.log({ user });
+    errors.email = "Email already exist";
+
     if (user) {
-      return res.status(406).json({ email: "Email already exist" });
+      return res.status(406).json(errors);
     }
 
     // creating a new User using the User Schema
@@ -104,7 +110,7 @@ router.post("/login", (req, res) => {
     bcryptjs.compare(password, user.password).then((isMatched) => {
       // user not matched
       if (!isMatched)
-        return res.status(406).json({ password: "Incorrect password" });
+        return res.status(400).json({ password: "Incorrect password" });
 
       //  if user matched, sign the JWT Token with a payload containing basic user info.
       // return token, user and a success message
