@@ -52,13 +52,12 @@ const ProfileSchema = new Schema({
       },
       company: {
         type: String,
-        required: true,
       },
       location: {
         type: String,
       },
       from: {
-        type: String,
+        type: Date,
         required: true,
       },
       to: {
@@ -82,10 +81,12 @@ const ProfileSchema = new Schema({
       },
       degree: {
         type: String,
-        required: true,
       },
       location: {
         type: String,
+      },
+      field_of_study: {
+        type: String
       },
       from: {
         type: String,

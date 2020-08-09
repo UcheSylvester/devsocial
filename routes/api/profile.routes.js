@@ -3,6 +3,8 @@ const passport = require("passport");
 
 const Profile = require("../../models/Profile.model");
 const validateProfile = require("../../validation/profile.validator");
+const validateExperienceInput = require("../../validation/experience.validator");
+const validateEducationInput = require("../../validation/education.validator");
 
 const router = express.Router();
 
@@ -101,7 +103,7 @@ router.get("/:id", (req, res) => {
 
       return res.json({ message: "success", profile });
     })
-    .catch((err) => res.status(500).json({ err }));
+    .catch((error) => res.status(500).json({ error }));
 });
 
 /***
@@ -122,7 +124,7 @@ router.get("/all", (req, res) => {
 
       return res.json({ message: "success", profiles });
     })
-    .catch((err) => res.status(500).json({ err }));
+    .catch((error) => res.status(500).json({ error }));
 });
 
 /***
@@ -217,6 +219,112 @@ router.post(
         });
       }
     });
+  }
+);
+
+/***
+ * @route   POST api/exprience
+ * @desc    add experience to profile
+ * @access  Private
+ */
+router.post(
+  "/experience",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const { errors, isValid } = validateExperienceInput(req.body);
+
+    if (!isValid) return res.status(500).json({ errors });
+
+    Profile.findOne({ user: req.user.id })
+      .populate("user", ["name", "avatar", "email", "date"])
+      .then((profile) => {
+        if (!profile)
+          return res.status(404).json({ message: "No profile found" });
+
+        const {
+          title,
+          company,
+          location,
+          to,
+          from,
+          current,
+          description,
+        } = req.body;
+
+        const newExperience = {
+          title,
+          company,
+          location,
+          to,
+          from,
+          current,
+          description,
+        };
+
+        console.log({ newExperience });
+
+        profile.experience.unshift(newExperience);
+
+        profile
+          .save()
+          .then((profile) =>
+            res.json({ message: "experience saved successfully", profile })
+          );
+      })
+      .catch((error) => res.status(500).json({ error }));
+  }
+);
+
+/***
+ * @route   POST api/education
+ * @desc    add experience to profile
+ * @access  Private
+ */
+router.post(
+  "/education",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const { errors, isValid } = validateEducationInput(req.body);
+
+    if (!isValid) return res.status(500).json({ errors });
+
+    Profile.findOne({ user: req.user.id })
+      .populate("user", ["name", "avatar", "email", "date"])
+      .then((profile) => {
+        if (!profile)
+          return res.status(404).json({ message: "No profile found" });
+
+        const {
+          school,
+          degree,
+          location,
+          to,
+          from,
+          current,
+          description,
+          field_of_study,
+        } = req.body;
+
+        const newEducation = {
+          school,
+          degree,
+          location,
+          to,
+          from,
+          current,
+          description,
+          field_of_study,
+        };
+
+        profile.education.unshift(newEducation);
+
+        profile
+          .save()
+          .then((profile) =>
+            res.json({ message: "education saved successfully", profile })
+          );
+      })
+      .catch((error) => res.status(500).json({ error }));
   }
 );
 
