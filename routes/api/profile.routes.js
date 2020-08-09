@@ -5,6 +5,7 @@ const Profile = require("../../models/Profile.model");
 const validateProfile = require("../../validation/profile.validator");
 const validateExperienceInput = require("../../validation/experience.validator");
 const validateEducationInput = require("../../validation/education.validator");
+const User = require("../../models/Users.model");
 
 const router = express.Router();
 
@@ -223,7 +224,7 @@ router.post(
 );
 
 /***
- * @route   POST api/exprience
+ * @route   POST api/profile/exprience
  * @desc    add experience to profile
  * @access  Private
  */
@@ -276,7 +277,7 @@ router.post(
 );
 
 /***
- * @route   POST api/education
+ * @route   POST api/profile/education
  * @desc    add education to profile
  * @access  Private
  */
@@ -329,7 +330,7 @@ router.post(
 );
 
 /***
- * @route   DELETE api/education/:id
+ * @route   DELETE api/profile/education/:id
  * @desc    delete education from profile
  * @access  Private
  */
@@ -399,6 +400,38 @@ router.delete(
           );
       })
       .catch((error) => res.status(500).json({ error }));
+  }
+);
+
+/***
+ * @route   DELETE api/profile
+ * @desc    delete user and profile
+ * @access  Private
+ */
+router.delete(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      user: { id },
+    } = req;
+
+    // find and remove the profile then remove the user also while doing that
+    Profile.findOneAndRemove({ user: id })
+      .then(() => {
+        User.findOneAndRemove({ _id: id })
+          .then(() => res.json({ message: "User deleted successfully" }))
+          .catch((error) =>
+            res
+              .status(500)
+              .json({ message: "An error occurred while deleting user", error })
+          );
+      })
+      .catch((error) =>
+        res
+          .status(500)
+          .json({ message: "An error occurred while deleting profile", error })
+      );
   }
 );
 
