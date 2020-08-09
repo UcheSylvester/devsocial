@@ -277,7 +277,7 @@ router.post(
 
 /***
  * @route   POST api/education
- * @desc    add experience to profile
+ * @desc    add education to profile
  * @access  Private
  */
 router.post(
@@ -322,6 +322,80 @@ router.post(
           .save()
           .then((profile) =>
             res.json({ message: "education saved successfully", profile })
+          );
+      })
+      .catch((error) => res.status(500).json({ error }));
+  }
+);
+
+/***
+ * @route   DELETE api/education/:id
+ * @desc    delete education from profile
+ * @access  Private
+ */
+router.delete(
+  "/education/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      params: { id },
+    } = req;
+
+    Profile.findOne({ user: req.user.id })
+      .populate("user", ["name", "avatar", "email", "date"])
+      .then((profile) => {
+        if (!profile)
+          return res.status(404).json({ message: "No profile found" });
+
+        const modifiedEducation = profile.education.filter(
+          (education) => education.id !== id
+        );
+
+        profile.education = modifiedEducation;
+
+        console.log({ modifiedEducation });
+
+        profile
+          .save()
+          .then((profile) =>
+            res.json({ message: "education deleted successfully", profile })
+          );
+      })
+      .catch((error) => res.status(500).json({ error }));
+  }
+);
+
+/***
+ * @route   DELETE api/experience/:id
+ * @desc    delete experience from profile
+ * @access  Private
+ */
+router.delete(
+  "/experience/:id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      params: { id },
+    } = req;
+
+    Profile.findOne({ user: req.user.id })
+      .populate("user", ["name", "avatar", "email", "date"])
+      .then((profile) => {
+        if (!profile)
+          return res.status(404).json({ message: "No profile found" });
+
+        const modifiedExperience = profile.experience.filter(
+          (experience) => experience.id !== id
+        );
+
+        profile.experience = modifiedExperience;
+
+        // console.log({ modifiedExperience });
+
+        profile
+          .save()
+          .then((profile) =>
+            res.json({ message: "experience deleted successfully", profile })
           );
       })
       .catch((error) => res.status(500).json({ error }));
