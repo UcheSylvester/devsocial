@@ -6,14 +6,19 @@ const validateProfile = require("../../validation/profile.validator");
 
 const router = express.Router();
 
-const checkIfItemExistWhenAddingToObject = (item) => item && { item };
+const formatToObject = (args) => {
+  return args.reduce((acc, field) => {
+    const entries = Object.entries(field);
 
-const formatToObject = () => {
-  console.log({ arguments });
-  arguments.reduce(
-    (acc, field) => ({ ...acc, ...checkIfItemExistWhenAddingToObject(field) }),
-    {}
-  );
+    const values = entries.reduce(
+      (acc, [key, value]) => value && { [key]: value },
+      {}
+    );
+
+    // console.log({ values });
+
+    return { ...acc, ...values };
+  }, {});
 };
 /***
  * @route   GET api/profile/test
@@ -35,19 +40,17 @@ router.get(
   (req, res) => {
     const { user } = req;
 
-    const { errors, isValid } = validateProfile(req.body);
+    const errors = {};
 
-    console.log({ user });
-
-    if (!isValid) return res.status(400).json({ errors });
-
-    errors.noprofile = "There is no profile for this user";
-
-    Profile.findOne({ user: user._id })
+    Profile.findOne({ user: user.id })
+      .populate("user", ["name", "avatar", "email", "date"])
       .then((profile) => {
-        if (!profile) return res.status(404).json({ errors });
+        if (!profile) {
+          errors.profile = "There is no profile for this user";
+          return res.status(404).json({ errors });
+        }
 
-        return res.json(profile);
+        return res.json({ message: "success", profile });
       })
       .catch((err) => res.status(500).json(err));
   }
@@ -62,11 +65,8 @@ router.post(
   "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
-    console.log({ req });
-    const {
-      user: { id },
-      body,
-    } = req;
+    const { user, body } = req;
+    const { id } = user;
 
     const { errors, isValid } = validateProfile(req.body);
 
@@ -79,6 +79,7 @@ router.post(
       status,
       skills,
       experience,
+      education,
       bio,
       github_username,
       youtube,
@@ -90,32 +91,34 @@ router.post(
 
     skills = skills.split(",");
 
-    const social = formatToObject(
-      youtube,
-      twitter,
-      facebook,
-      linkedin,
-      instagram
-    );
+    const social = formatToObject([
+      { youtube },
+      { twitter },
+      { facebook },
+      { linkedin },
+      { instagram },
+    ]);
 
     const profileFields = {
-      user: id,
-      ...formatToObject(
-        handle,
-        company,
-        location,
-        status,
-        bio,
-        github_username
-      ),
+      user,
+      ...formatToObject([
+        { handle },
+        { company },
+        { location },
+        { status },
+        { bio },
+      ]),
+      github_username,
       social,
       skills,
+      experience: experience || [],
+      education: education || [],
     };
-
-    console.log({ profileFields, social, skills });
 
     // CHECK IF PROFILE WAS ALREADY EXISTING AND UPDATE OR CREATE A NEW PROFILE
     Profile.findOne({ user: id }).then((profile) => {
+      // console.log({ profile });
+
       if (profile) {
         // UPDATE
         Profile.findOneAndUpdate(
@@ -123,26 +126,26 @@ router.post(
           { $set: profileFields },
           { new: true }
         )
+          .populate("user")
           .then((profile) =>
             res.json({ message: "Profile updated successfully!", profile })
           )
           .catch((err) => console.log({ err }));
       } else {
         // CREATE
-
         // check if handle exists
         Profile.findOne({ handle: profileFields.handle }).then((profile) => {
           if (profile) {
             errors.handle = "That handle already exists";
-            res.status(400).json({ errors });
+            return res.status(400).json({ errors });
           }
-        });
 
-        new Profile(profileFields)
-          .save()
-          .then((profile) =>
-            res.json({ message: "Profile created successfully!", profile })
-          );
+          new Profile(profileFields)
+            .save()
+            .then((profile) =>
+              res.json({ message: "Profile created successfully!", profile })
+            );
+        });
       }
     });
   }

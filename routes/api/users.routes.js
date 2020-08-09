@@ -76,13 +76,18 @@ router.post("/register", (req, res) => {
       bcryptjs.hash(newUser.password, salt, (error, hash) => {
         if (error) throw error;
 
-        console.log({ hash });
+        // console.log({ hash });
 
         // setting the password on the new user to be saved to the generated hash from bcrypt
         newUser.password = hash;
         newUser
           .save()
-          .then((user) => res.json(formatUser(user)))
+          .then((user) =>
+            res.json({
+              message: "registration successful",
+              user: formatUser(user),
+            })
+          )
           .catch((err) => {
             console.log({ err });
             res.status(500);
