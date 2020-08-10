@@ -98,7 +98,7 @@ router.post("/register", (req, res) => {
 });
 
 /***
- * @route   POST api/users/loginb
+ * @route   POST api/users/login
  * @desc    Login user returing JWT token
  * @access  Public
  */
@@ -145,12 +145,12 @@ router.post("/login", (req, res) => {
 });
 
 /***
- * @route   POST api/users/register
+ * @route   POST api/users
  * @desc    Return current user
  * @access  Private
  */
 router.get(
-  "/current",
+  "/",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
     const { user } = req;

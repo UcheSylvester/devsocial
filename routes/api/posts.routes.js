@@ -70,9 +70,10 @@ router.post(
 
     const {
       body: { text, name, avatar },
+      user: { id },
     } = req;
 
-    new Post({ text, name, avatar })
+    new Post({ text, name, avatar, user: id })
       .save()
       .then((post) => res.json({ message: "success", post }))
       .catch(() => res.status(400).json({ message: "couldn't create post" }));

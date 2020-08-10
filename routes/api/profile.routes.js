@@ -6,6 +6,7 @@ const validateProfile = require("../../validation/profile.validator");
 const validateExperienceInput = require("../../validation/experience.validator");
 const validateEducationInput = require("../../validation/education.validator");
 const User = require("../../models/Users.model");
+const PostModel = require("../../models/Post.model");
 
 const router = express.Router();
 
@@ -88,8 +89,6 @@ router.get("/handle/:handle", (req, res) => {
 router.get("/:id", (req, res) => {
   const { id } = req.params;
 
-  console.log({ id });
-
   const errors = {};
 
   Profile.findOne({ _id: id })
@@ -103,7 +102,7 @@ router.get("/:id", (req, res) => {
       return res.json({ message: "success", profile });
     })
     .catch((error) =>
-      res.status(404).json({ message: "no profile found for the users" })
+      res.status(404).json({ message: "no profile found for the user" })
     );
 });
 
@@ -432,5 +431,34 @@ router.delete(
       );
   }
 );
+
+/***
+ * @route   GET api/profile/posts
+ * @desc    get all post made by this user
+ * @access  Private
+ */
+router.get(
+  "/posts",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      user: { id },
+    } = req;
+
+    Profile.findOne({ user: id })
+      .then((profile) => {
+        PostModel.where("user")
+          .equals(id)
+          .then((posts) => res.json({ posts }))
+          .catch((err) => res.status(500));
+      })
+      .catch((err) => {
+        console.log({ err });
+        res.status(404).json({ message: "no user found" });
+      });
+  }
+);
+
+module.exports = router;
 
 module.exports = router;
