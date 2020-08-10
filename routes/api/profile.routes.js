@@ -18,8 +18,6 @@ const formatToObject = (args) => {
       {}
     );
 
-    // console.log({ values });
-
     return { ...acc, ...values };
   }, {});
 };
@@ -189,8 +187,6 @@ router.post(
 
     // CHECK IF PROFILE WAS ALREADY EXISTING AND UPDATE OR CREATE A NEW PROFILE
     Profile.findOne({ user: id }).then((profile) => {
-      // console.log({ profile });
-
       if (profile) {
         // UPDATE
         Profile.findOneAndUpdate(
