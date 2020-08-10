@@ -25,6 +25,7 @@ router.get("/test", (req, res) => {
 router.get("/", (req, res) => {
   Post.find()
     .sort({ date: -1 })
+    .populate({ path: "likes", populate: { path: "user" } })
     .then((posts) => res.json({ message: "success", posts }))
     .catch((error) => res.status(404).json({ message: "no post found" }));
 });
@@ -128,15 +129,15 @@ router.post(
       .populate("user")
       .then((profile) => {
         Post.findById(post_id)
+          .populate({ path: "likes", populate: { path: "user" } })
           .then((post) => {
             // check if user has already liked post
-            if (post.likes.find((like) => like.user.toString() === id))
+            if (post.likes.find((like) => like.user._id.toString() === id))
               return res
                 .status(400)
                 .json({ message: "user already liked this post" });
 
-            // console.log({ post, profile });
-            post.likes.unshift({ user: id });
+            post.likes.unshift({ user: profile.user });
 
             post
               .save()
@@ -149,9 +150,15 @@ router.post(
                 res.status(500).json(err);
               });
           })
-          .catch((err) => res.status(404).json({ message: "user not found" }));
+          .catch((err) => {
+            console.log({ err });
+            res.status(404).json({ message: "post not found" });
+          });
       })
-      .catch((err) => res.status(404).json({ message: "user not found" }));
+      .catch((err) => {
+        console.log({ err });
+        res.status(404).json({ message: "user not found" });
+      });
   }
 );
 
