@@ -40,14 +40,16 @@ router.get("/:post_id", (req, res) => {
   } = req;
 
   Post.findOne({ _id: post_id })
+    .populate({ path: "likes", populate: { path: "user" } })
     .then((post) => {
       if (!post) return res.status(404).json({ message: "post not found" });
 
       return res.json({ message: "success", post });
     })
-    .catch((error) =>
-      res.status(404).json({ message: "no post found", post: null })
-    );
+    .catch((error) => {
+      console.log({ error });
+      res.status(404).json({ message: "no post found" });
+    });
 });
 
 /***
@@ -103,6 +105,51 @@ router.delete(
             console.log({ err });
             res.status(404).json({ message: "post not found" });
           });
+      })
+      .catch((err) => res.status(404).json({ message: "user not found" }));
+  }
+);
+
+/***
+ * @route   POST api/posts/like
+ * @desc    like post
+ * @access  Private
+ */
+router.post(
+  "/like/:post_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      params: { post_id },
+      user: { id },
+    } = req;
+
+    ProfileModel.findOne({ user: id })
+      .populate("user")
+      .then((profile) => {
+        Post.findById(post_id)
+          .then((post) => {
+            // check if user has already liked post
+            if (post.likes.find((like) => like.user.toString() === id))
+              return res
+                .status(400)
+                .json({ message: "user already liked this post" });
+
+            // console.log({ post, profile });
+            post.likes.unshift({ user: id });
+
+            post
+              .save()
+              .then((post) =>
+                res.json({ message: "Post liked successfully", post })
+              )
+              .catch((err) => {
+                console.log({ err });
+
+                res.status(500).json(err);
+              });
+          })
+          .catch((err) => res.status(404).json({ message: "user not found" }));
       })
       .catch((err) => res.status(404).json({ message: "user not found" }));
   }

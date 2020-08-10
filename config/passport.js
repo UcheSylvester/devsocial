@@ -20,7 +20,7 @@ module.exports = (passport) => {
 
       User.findById(id)
         .then((user) => {
-          console.log({ user });
+          // console.log({ user });
 
           if (user) return done(null, user);
 
