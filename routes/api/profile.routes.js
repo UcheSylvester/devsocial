@@ -232,7 +232,7 @@ router.post(
   (req, res) => {
     const { errors, isValid } = validateExperienceInput(req.body);
 
-    if (!isValid) return res.status(500).json({ errors });
+    if (!isValid) return res.status(400).json({ errors });
 
     Profile.findOne({ user: req.user.id })
       .populate("user", ["name", "avatar", "email", "date"])
@@ -285,7 +285,7 @@ router.post(
   (req, res) => {
     const { errors, isValid } = validateEducationInput(req.body);
 
-    if (!isValid) return res.status(500).json({ errors });
+    if (!isValid) return res.status(400).json({ errors });
 
     Profile.findOne({ user: req.user.id })
       .populate("user", ["name", "avatar", "email", "date"])

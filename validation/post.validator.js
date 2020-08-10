@@ -7,7 +7,7 @@ module.exports = validatePostInputs = (data) => {
 
   text = !isEmpty(text) ? text : "";
 
-  if (validator.isEmpty(text)) errors.text = "Post field is required";
+  if (validator.isEmpty(text)) errors.text = "Text field is required";
 
   if (!validator.isLength(text, { min: 0, max: 300 }))
     errors.text = "Post must not be greater than 300 characters";
