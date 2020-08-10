@@ -137,12 +137,70 @@ router.post(
                 .status(400)
                 .json({ message: "user already liked this post" });
 
+            // add user to like
             post.likes.unshift({ user: profile.user });
 
             post
               .save()
               .then((post) =>
                 res.json({ message: "Post liked successfully", post })
+              )
+              .catch((err) => {
+                console.log({ err });
+
+                res.status(500).json(err);
+              });
+          })
+          .catch((err) => {
+            console.log({ err });
+            res.status(404).json({ message: "post not found" });
+          });
+      })
+      .catch((err) => {
+        console.log({ err });
+        res.status(404).json({ message: "user not found" });
+      });
+  }
+);
+
+/***
+ * @route   POST api/posts/like
+ * @desc    like post
+ * @access  Private
+ */
+router.post(
+  "/unlike/:post_id",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      params: { post_id },
+      user: { id },
+    } = req;
+
+    ProfileModel.findOne({ user: id })
+      .populate("user")
+      .then((profile) => {
+        Post.findById(post_id)
+          .populate({ path: "likes", populate: { path: "user" } })
+          .then((post) => {
+            // when user have not liked post initially, no need to unlike
+            const userLikedPost = post.likes.find(
+              (like) => like.user._id.toString() === id
+            );
+
+            if (!userLikedPost)
+              return res.status(400).json({
+                message: "User cannot unlike a post he have not liked",
+              });
+
+            post.likes = post.likes.filter(
+              (like) => like.user._id.toString() !== id
+            );
+
+            post
+              .save()
+              .then((post) =>
+                res.json({ message: "Post unliked successfully", post })
               )
               .catch((err) => {
                 console.log({ err });
