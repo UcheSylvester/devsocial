@@ -77,7 +77,7 @@ router.get("/handle/:handle", (req, res) => {
 
       return res.json({ message: "success", profile });
     })
-    .catch((err) => res.status(500).json({ err }));
+    .catch((error) => res.status(500).json({ error }));
 });
 
 /***
@@ -102,7 +102,9 @@ router.get("/:id", (req, res) => {
 
       return res.json({ message: "success", profile });
     })
-    .catch((error) => res.status(500).json({ error }));
+    .catch((error) =>
+      res.status(404).json({ message: "no profile found for the users" })
+    );
 });
 
 /***
