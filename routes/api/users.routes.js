@@ -9,6 +9,8 @@ const keys = require("../../config/keys");
 
 const validateRegisterInput = require("../../validation/register.validator");
 const validateLoginInput = require("../../validation/login.validator");
+const ProfileModel = require("../../models/Profile.model");
+const PostModel = require("../../models/Post.model");
 
 const { secretOrKey } = keys;
 
@@ -155,6 +157,41 @@ router.get(
   (req, res) => {
     const { user } = req;
     res.json({ message: "success", user: formatUser(user) });
+  }
+);
+
+/***
+ * @route   GET api/users/post
+ * @desc    Get all post by the current user
+ * @access  Private
+ */
+router.get(
+  "/posts",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const {
+      user: { id },
+    } = req;
+
+    ProfileModel.findOne({ user: id })
+      .then((profile) => {
+        PostModel.where("user")
+          .equals(id)
+          .then((posts) => {
+            res.json({ message: "success", posts });
+          })
+          .catch((error) => {
+            console.log({ error });
+            return res.status(500).json({ error });
+          });
+
+        // if()
+      })
+      .catch((err) => {
+        console.log({ err });
+
+        res.status(404).json({ message: "user not found" });
+      });
   }
 );
 

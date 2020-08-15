@@ -432,33 +432,4 @@ router.delete(
   }
 );
 
-/***
- * @route   GET api/profile/posts
- * @desc    get all post made by this user
- * @access  Private
- */
-router.get(
-  "/posts",
-  passport.authenticate("jwt", { session: false }),
-  (req, res) => {
-    const {
-      user: { id },
-    } = req;
-
-    Profile.findOne({ user: id })
-      .then((profile) => {
-        PostModel.where("user")
-          .equals(id)
-          .then((posts) => res.json({ posts }))
-          .catch((err) => res.status(500));
-      })
-      .catch((err) => {
-        console.log({ err });
-        res.status(404).json({ message: "no user found" });
-      });
-  }
-);
-
-module.exports = router;
-
 module.exports = router;

@@ -27,6 +27,7 @@ router.get("/", (req, res) => {
   Post.find()
     .sort({ date: -1 })
     .populate({ path: "likes", populate: { path: "user" } })
+    // .populate("user", ["name", "avatar", "email", "date"])
     .then((posts) => res.json({ message: "success", posts }))
     .catch((error) => res.status(404).json({ message: "no post found" }));
 });
