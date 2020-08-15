@@ -82,6 +82,27 @@ router.get("/handle/:handle", (req, res) => {
 });
 
 /***
+ * @route   POST api/profile/all
+ * @desc    GET all profiles
+ * @access  Public
+ */
+router.get("/all", (req, res) => {
+  const errors = {};
+
+  Profile.find()
+    .populate("user")
+    .then((profiles) => {
+      if (!profiles) {
+        errors.profile = "No profiles created yet";
+        return res.status(404).json({ errors });
+      }
+
+      return res.json({ message: "success", profiles });
+    })
+    .catch((error) => res.status(500).json({ error }));
+});
+
+/***
  * @route   GET api/profile/:id
  * @desc    GET profile by id
  * @access  Public
@@ -104,27 +125,6 @@ router.get("/:id", (req, res) => {
     .catch((error) =>
       res.status(404).json({ message: "no profile found for the user" })
     );
-});
-
-/***
- * @route   POST api/profile/all
- * @desc    GET all profiles
- * @access  Public
- */
-router.get("/all", (req, res) => {
-  const errors = {};
-
-  Profile.find()
-    .populate("user")
-    .then((profiles) => {
-      if (!profiles) {
-        errors.profile = "No profiles created yet";
-        return res.status(404).json({ errors });
-      }
-
-      return res.json({ message: "success", profiles });
-    })
-    .catch((error) => res.status(500).json({ error }));
 });
 
 /***
